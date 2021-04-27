@@ -15,8 +15,8 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    required: true
-  }
-}, { versionKey: false})
+    required: true,
+  },
+}, { versionKey: false });
 
 module.exports = mongoose.model('user', userSchema);
