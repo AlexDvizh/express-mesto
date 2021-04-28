@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
 const usersRoutes = require('./routes/users');
 const cardsRoutes = require('./routes/cards');
 
@@ -8,6 +9,8 @@ const {
   MONGO_URL = 'mongodb://localhost:27017/mestodb',
 } = process.env;
 const app = express();
+
+app.use(helmet());
 
 app.use(express.json());
 
@@ -23,7 +26,7 @@ app.use('/', usersRoutes);
 app.use('/', cardsRoutes);
 
 app.get('*', (req, res) => {
-  res.status(404).send('Ошибка 404');
+  res.status(404).send({ message: 'Ошибка 404. Страница не найдена' });
 });
 
 async function main() {

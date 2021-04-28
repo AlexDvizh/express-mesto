@@ -33,10 +33,10 @@ exports.createCard = (req, res) => {
 };
 
 exports.deleteCard = (req, res) => {
-  Cards.delete({})
+  Cards.remove(req.params.cardId)
     .orFail(new Error('NotCardId'))
-    .then((card) => {
-      res.status(200).send(card);
+    .then((user) => {
+      res.status(200).send(user);
     })
     .catch((err) => {
       if (err.message === 'NotCardId') {

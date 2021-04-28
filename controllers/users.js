@@ -38,7 +38,7 @@ exports.updateProfile = (req, res) => {
   const owner = req.user._id;
   const { name, about } = req.body;
 
-  Users.findByIdAndUpdate(owner, { name, about }, { new: true })
+  Users.findByIdAndUpdate(owner, { name, about }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
@@ -56,7 +56,7 @@ exports.updateAvatar = (req, res) => {
   const owner = req.user._id;
   const { avatar } = req.body;
 
-  Users.findByIdAndUpdate(owner, { avatar }, { new: true })
+  Users.findByIdAndUpdate(owner, { avatar }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
