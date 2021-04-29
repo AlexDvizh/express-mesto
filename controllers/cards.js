@@ -33,13 +33,15 @@ exports.createCard = (req, res) => {
 };
 
 exports.deleteCard = (req, res) => {
-  Cards.remove(req.params.cardId)
+  Cards.remove({ _id: req.params.cardId })
     .orFail(new Error('NotCardId'))
     .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.message === 'NotCardId') {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Не валидный айди' });
+      } else if (err.message === 'NotCardId') {
         res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
@@ -48,21 +50,20 @@ exports.deleteCard = (req, res) => {
 };
 
 exports.likeCard = (req, res) => {
-  const owner = req.user._id;
-
   Cards.findByIdAndUpdate(
     req.params.cardId,
-    owner,
     { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
     { new: true },
   )
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotCardId'))
     .then((card) => {
       res.status(200).send({ data: card });
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Не валидный айди.' });
+      } else if (err.message === 'NotCardId') {
+        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
@@ -75,11 +76,13 @@ exports.dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } }, // убрать _id из массива
     { new: true },
   )
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotCardId'))
     .then((card) => res.status(200).send(card))
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Не валидный айди.' });
+      } else if (err.message === 'NotCardId') {
+        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }

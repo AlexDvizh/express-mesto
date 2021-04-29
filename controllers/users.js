@@ -8,15 +8,18 @@ exports.getUsers = (req, res) => {
 
 exports.getUserById = (req, res) => {
   Users.findById(req.params.userId)
+    .orFail(new Error('NotUserId'))
     .then((user) => {
-      if (user) {
-        res.status(200).send(user);
-      } else {
-        res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
-      }
+      res.status(200).send(user);
     })
-    .catch(() => {
-      res.status(500).send({ message: 'Произошла ошибка' });
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Не валидный айди.' });
+      } else if (err.message === 'NotUserId') {
+        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
+      }
     });
 };
 
