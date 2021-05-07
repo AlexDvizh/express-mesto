@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const Users = require('../models/user');
 
 exports.getUsers = (req, res) => {
@@ -24,9 +26,14 @@ exports.getUserById = (req, res) => {
 };
 
 exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-
-  Users.create({ name, about, avatar })
+  bcrypt.hash(req.body.password, 10)
+    .then((hash) => Users.create({
+      name: req.body.name,
+      about: req.body.about,
+      avatar: req.body.avatar,
+      email: req.body.email,
+      password: hash,
+    }))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -67,6 +74,39 @@ exports.updateAvatar = (req, res) => {
         res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
       } else if (err.name === 'ValidationError') {
         res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара' });
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
+      }
+    });
+};
+
+exports.login = (req, res) => {
+  const { email, password } = req.body;
+
+  return Users.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+
+      res.send({ token });
+    })
+    .catch((err) => {
+      res
+        .status(401)
+        .send({ message: err.message });
+    });
+};
+
+exports.userInfo = (req, res) => {
+  Users.findById(req.params.userId)
+    .orFail(new Error('NotUserId'))
+    .then((user) => {
+      res.status(200).send(user);
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Не валидный айди.' });
+      } else if (err.message === 'NotUserId') {
+        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
