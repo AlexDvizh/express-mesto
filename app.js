@@ -21,6 +21,11 @@ app.get('*', (req, res) => {
   res.status(404).send({ message: 'Ошибка 404. Страница не найдена' });
 });
 
+app.use((err, req, res, next) => {
+  res.status(err.statusCode).send({ message: err.message });
+  next(err);
+});
+
 async function main() {
   await mongoose.connect(MONGO_URL, {
     useNewUrlParser: true,

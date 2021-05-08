@@ -17,18 +17,19 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 2,
     maxlength: 30,
-    default: 'Жак-Ив Кусто',
+    default: 'Исследователь',
   },
   avatar: {
     type: String,
     required: true,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    match: [/^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!])*)?/, 'Введите правильную ссылку'],
   },
   email: {
     type: String,
     required: true,
-    unique: true,
     validate: { validator: (v) => isEmail(v) },
+    unique: true,
   },
   password: {
     type: String,

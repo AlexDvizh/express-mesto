@@ -25,7 +25,7 @@ exports.getUserById = (req, res) => {
     });
 };
 
-exports.createUser = (req, res) => {
+exports.createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then((hash) => Users.create({
       name: req.body.name,
@@ -38,9 +38,12 @@ exports.createUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send(err.message);
+      } else if (err.code === 11000) {
+        res.status(409).send({ message: 'Пользователь с переданным email уже существует' });
       } else {
         res.status(500).send('Произошла ошибка');
       }
+      next(err);
     });
 };
 
@@ -97,7 +100,20 @@ exports.login = (req, res) => {
 };
 
 exports.userInfo = (req, res) => {
-  Users.findById(req.params.userId)
+  const owner = req.user._id;
+  const {
+    name,
+    about,
+    avatar,
+    email,
+  } = req.body;
+
+  return Users.findUserByCredentials(owner, {
+    name,
+    about,
+    avatar,
+    email,
+  })
     .orFail(new Error('NotUserId'))
     .then((user) => {
       res.status(200).send(user);
