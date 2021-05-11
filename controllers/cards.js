@@ -1,4 +1,5 @@
-const Cards = require('../models/card');
+const Cards = require('../models/card');7
+const { NotFoundError, NotValidId, NotValidData } = require('../errors/errors');
 
 exports.getCards = (req, res) => {
   Cards.find({})
@@ -14,7 +15,7 @@ exports.getCards = (req, res) => {
     });
 };
 
-exports.createCard = (req, res) => {
+exports.createCard = (req, res, next) => {
   const owner = req.user._id;
   const { name, link } = req.body;
 
@@ -29,27 +30,34 @@ exports.createCard = (req, res) => {
       } else {
         res.status(500).send('Произошла ошибка');
       }
+      return next(err);
     });
 };
 
-exports.deleteCard = (req, res) => {
+exports.deleteCard = (req, res, next) => {
   Cards.remove({ _id: req.params.cardId })
-    .orFail(new Error('NotCardId'))
-    .then((user) => {
-      res.status(200).send(user);
+    .orFail(() => new NotFoundError('NotCardId'))
+    .then((card) => {
+      if(req.user._id === card.owner.toString()) {
+        return res.status(200).send(card);
+      }
+      return Promise.reject(new Error('NotValid'))
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(400).send({ message: 'Не валидный айди' });
+      } else if (err.message === 'NotValid') {
+        res.status(403).send({ message: 'Нельзя удалять карточки других пользователей' });
       } else if (err.message === 'NotCardId') {
         res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
-      } else {
+      }else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      return next(err);
     });
 };
 
-exports.likeCard = (req, res) => {
+exports.likeCard = (req, res, next) => {
   Cards.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
@@ -67,6 +75,7 @@ exports.likeCard = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      return next(err);
     });
 };
 
@@ -86,5 +95,6 @@ exports.dislikeCard = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      return next(err);
     });
 };

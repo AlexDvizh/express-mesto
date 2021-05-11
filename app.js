@@ -22,8 +22,12 @@ app.get('*', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  res.status(err.statusCode).send({ message: err.message });
-  next(err);
+  const { statusCode = 500, message } = err;
+  res.status(statusCode).send({
+    message: statusCode === 500
+      ? 'На сервере произошла ошибка'
+      : message,
+    });
 });
 
 async function main() {
@@ -31,12 +35,10 @@ async function main() {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
+    useUnifiedTopology: true,
   });
-  console.log('Connected to db');
 
-  await app.listen(PORT, () => {
-    console.log(`App listening on port ${PORT}`);
-  });
+  await app.listen(PORT);
 }
 
 main();

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Users = require('../models/user');
+const { NotFoundError, NotValidId, NotValidData} = require('../errors/errors');
 
 exports.getUsers = (req, res) => {
   Users.find({})
@@ -8,7 +9,7 @@ exports.getUsers = (req, res) => {
     .catch(() => res.status(500).send({ message: 'Запрашиваемый пользователь не найден' }));
 };
 
-exports.getUserById = (req, res) => {
+exports.getUserById = (req, res, next) => {
   Users.findById(req.params.userId)
     .orFail(new Error('NotUserId'))
     .then((user) => {
@@ -22,6 +23,7 @@ exports.getUserById = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      return next(err);
     });
 };
 
@@ -47,12 +49,12 @@ exports.createUser = (req, res, next) => {
     });
 };
 
-exports.updateProfile = (req, res) => {
+exports.updateProfile = (req, res, next) => {
   const owner = req.user._id;
   const { name, about } = req.body;
 
   Users.findByIdAndUpdate(owner, { name, about }, { new: true, runValidators: true })
-    .orFail(new Error('NotValidId'))
+    .orFail(() => new NotFoundError('NotValidId'))
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.message === 'NotValidId') {
@@ -62,15 +64,16 @@ exports.updateProfile = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      return next(err);
     });
 };
 
-exports.updateAvatar = (req, res) => {
+exports.updateAvatar = (req, res, next) => {
   const owner = req.user._id;
   const { avatar } = req.body;
 
   Users.findByIdAndUpdate(owner, { avatar }, { new: true, runValidators: true })
-    .orFail(new Error('NotValidId'))
+    .orFail(() => new Error('NotValidId'))
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.message === 'NotValidId') {
@@ -80,10 +83,11 @@ exports.updateAvatar = (req, res) => {
       } else {
         res.status(500).send({ message: 'Произошла ошибка' });
       }
+      return next(err);
     });
 };
 
-exports.login = (req, res) => {
+exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return Users.findUserByCredentials(email, password)
@@ -96,6 +100,7 @@ exports.login = (req, res) => {
       res
         .status(401)
         .send({ message: err.message });
+      return next(err);
     });
 };
 

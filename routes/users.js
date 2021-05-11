@@ -1,4 +1,5 @@
 const usersRoutes = require('express').Router();
+const express = require('express');
 const { celebrate, Joi } = require('celebrate');
 const {
   getUsers, getUserById, createUser, updateAvatar, updateProfile, login, userInfo,
@@ -14,9 +15,9 @@ usersRoutes.get('/users/:userId', auth, getUserById);
 usersRoutes.patch('/users/me', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    about: Joi.string().required().min(2),
+    about: Joi.string().required().min(2).max(30),
   }),
-}), auth, updateProfile);
+}), updateProfile);
 
 usersRoutes.patch('/users/me/avatar', auth, updateAvatar);
 

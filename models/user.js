@@ -23,12 +23,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
-    match: [/^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!])*)?/, 'Введите правильную ссылку'],
+    match: [/^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!])*)?/, { message: 'Введите правильную ссылку' }],
   },
   email: {
     type: String,
     required: true,
-    validate: { validator: (v) => isEmail(v) },
+    validate: {
+      validator: (v) => isEmail(v),
+      message: 'Неправильный формат почты'
+    },
     unique: true,
   },
   password: {
@@ -38,7 +41,7 @@ const userSchema = new mongoose.Schema({
   },
 }, { versionKey: false });
 
-userSchema.statics.findUserByCredentials = function (email, password) {
+userSchema.statics.findUserByCredentials = function userData(email, password) {
   return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
