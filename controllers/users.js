@@ -1,29 +1,30 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Error } = require('mongoose');
 const Users = require('../models/user');
-const { NotFoundError, NotValidId, NotValidData} = require('../errors/errors');
+const NotValidData = require('../errors/NotValidData');
+const NotFoundError = require('../errors/NotFoundError');
+const NotValidEmail = require('../errors/NotValidEmail');
+const NotValidLoginOrPass = require('../errors/NotValidLoginOrPass');
 
-exports.getUsers = (req, res) => {
+exports.getUsers = (req, res, next) => {
   Users.find({})
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Запрашиваемый пользователь не найден' }));
+    .catch(() => {
+      next(new NotFoundError('Запрашиваемый пользователь не найден'));
+    });
 };
 
 exports.getUserById = (req, res, next) => {
   Users.findById(req.params.userId)
-    .orFail(new Error('NotUserId'))
+    .orFail(() => next(new NotFoundError('Пользователь по указанному _id не найден')))
     .then((user) => {
-      res.status(200).send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Не валидный айди.' });
-      } else if (err.message === 'NotUserId') {
-        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(new NotValidData('Переданы некорректные данные при обновлении профиля'));
       }
-      return next(err);
     });
 };
 
@@ -39,13 +40,10 @@ exports.createUser = (req, res, next) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send(err.message);
+        next(new NotValidData('Переданы некорректные данные при создании пользователя'));
       } else if (err.code === 11000) {
-        res.status(409).send({ message: 'Пользователь с переданным email уже существует' });
-      } else {
-        res.status(500).send('Произошла ошибка');
+        next(new NotValidEmail('Пользователь с переданным email уже существует'));
       }
-      next(err);
     });
 };
 
@@ -54,17 +52,14 @@ exports.updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
   Users.findByIdAndUpdate(owner, { name, about }, { new: true, runValidators: true })
-    .orFail(() => new NotFoundError('NotValidId'))
+    .orFail(() => new Error('NotValidId'))
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
+        next(new NotFoundError('Пользователь по указанному _id не найден'));
       } else if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(new NotValidData('Переданы некорректные данные при обновлении профиля'));
       }
-      return next(err);
     });
 };
 
@@ -77,13 +72,10 @@ exports.updateAvatar = (req, res, next) => {
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
+        next(new NotFoundError('Пользователь по указанному _id не найден'));
       } else if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(new NotValidData('Переданы некорректные данные при обновлении аватара'));
       }
-      return next(err);
     });
 };
 
@@ -96,15 +88,12 @@ exports.login = (req, res, next) => {
 
       res.send({ token });
     })
-    .catch((err) => {
-      res
-        .status(401)
-        .send({ message: err.message });
-      return next(err);
+    .catch(() => {
+      next(new NotValidLoginOrPass('Передан неверный логин или пароль'));
     });
 };
 
-exports.userInfo = (req, res) => {
+exports.userInfo = (req, res, next) => {
   const owner = req.user._id;
   const {
     name,
@@ -120,16 +109,10 @@ exports.userInfo = (req, res) => {
     email,
   })
     .orFail(new Error('NotUserId'))
-    .then((user) => {
-      res.status(200).send(user);
-    })
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Не валидный айди.' });
-      } else if (err.message === 'NotUserId') {
-        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(new NotFoundError('Передан невалидный id'));
       }
     });
 };
