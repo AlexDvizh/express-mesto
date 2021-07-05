@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const { celebrate, Joi } = require('celebrate');
+const { ObjectId } = require('mongoose').Types;
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -29,6 +31,10 @@ const cardSchema = new mongoose.Schema({
     type: Date,
     required: true,
     default: Date.now,
+  },
+ cardId: {
+    type: String,
+    required: true,
   },
 });
 

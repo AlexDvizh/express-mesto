@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const { errors } = require('celebrate');
 const usersRoutes = require('./routes/users');
 const cardsRoutes = require('./routes/cards');
+const centralizedErrorHandling = require('./middlewares/centralizedErrorHandling');
+const NotFoundError = require('./errors/NotFoundError');
 
 const {
   PORT = 3000,
@@ -25,18 +27,12 @@ app.use(express.json());
 app.use('/', usersRoutes);
 app.use('/', cardsRoutes);
 
-app.get('*', (req, res) => {
-  res.status(404).send({ message: 'Ошибка 404. Страница не найдена' });
+app.get('*', (req, res, next) => {
+  next(new NotFoundError('Ошибка 404. Страница не найдена'));
 });
 
 app.use(errors());
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'На сервере произошла ошибка' : message,
-  });
-  next();
-});
+app.use(centralizedErrorHandling);
 
 app.listen(PORT);
