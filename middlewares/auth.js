@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const NotValidLoginOrPass = require('../errors/NotValidLoginOrPass');
+const { JWT_SECRET = 'some-secret-key' } = process.env
 
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;
@@ -11,7 +12,7 @@ module.exports = (req, res, next) => {
   let payload;
 
   try {
-    payload = jwt.verify(token, 'some-secret-key');
+    payload = jwt.verify(token, JWT_SECRET);
   } catch (err) {
     throw new NotValidLoginOrPass('Необходима авторизация');
   }

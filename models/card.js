@@ -31,11 +31,7 @@ const cardSchema = new mongoose.Schema({
     type: Date,
     required: true,
     default: Date.now,
-  },
- cardId: {
-    type: String,
-    required: true,
-  },
+  }
 });
 
 module.exports = mongoose.model('card', cardSchema);
