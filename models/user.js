@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { ObjectId } = require('mongoose').Types;
 const validator = require('validator');
 
 const bcrypt = require('bcryptjs');

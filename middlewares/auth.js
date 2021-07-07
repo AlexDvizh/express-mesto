@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const NotValidLoginOrPass = require('../errors/NotValidLoginOrPass');
-const { JWT_SECRET = 'some-secret-key' } = process.env
+
+const { JWT_SECRET = 'some-secret-key' } = process.env;
 
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;

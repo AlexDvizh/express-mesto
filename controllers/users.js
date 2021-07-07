@@ -29,7 +29,7 @@ exports.getUserById = (req, res, next) => {
 };
 
 exports.createUser = (req, res, next) => {
-  const { name, about, avatar, email, password } = req.body;
+  const { email } = req.body;
   bcrypt.hash(req.body.password, 10)
     .then((hash) => Users.create({
       name: req.body.name,
