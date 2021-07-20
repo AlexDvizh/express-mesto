@@ -7,6 +7,8 @@ const NotFoundError = require('../errors/NotFoundError');
 const NotValidEmail = require('../errors/NotValidEmail');
 const NotValidLoginOrPass = require('../errors/NotValidLoginOrPass');
 
+const { NODE_ENV, JWT_SECRET } = process.env;
+
 exports.getUsers = (req, res, next) => {
   Users.find({})
     .then((user) => res.send({ data: user }))
@@ -86,9 +88,9 @@ exports.login = (req, res, next) => {
 
   return Users.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-
-      res.send({ token });
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'some-secret-key', { expiresIn: '7d' });
+      console.log(token);
+      return res.send({ token });
     })
     .catch(() => {
       next(new NotValidLoginOrPass('Передан неверный логин или пароль'));
@@ -96,7 +98,7 @@ exports.login = (req, res, next) => {
 };
 
 exports.userInfo = (req, res, next) => {
-  const owner = req.user._id;
+  //const owner = req.user._id;
   const {
     name,
     about,
@@ -104,7 +106,7 @@ exports.userInfo = (req, res, next) => {
     email,
   } = req.body;
 
-  return Users.findUserByCredentials(owner, {
+  return Users.findUserByCredentials(req.user._id, {
     name,
     about,
     avatar,
