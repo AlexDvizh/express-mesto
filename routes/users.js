@@ -27,7 +27,7 @@ usersRoutes.patch('/users/me/avatar', celebrate({
 }), auth, updateAvatar);
 
 usersRoutes.get('/users/:userId', celebrate({
-  params: Joi.object().keys({
+  body: Joi.object().keys({
     userId: Joi.string().required().length(24).hex(),
   }),
 }), auth, getUserById);

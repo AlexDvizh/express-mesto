@@ -6,7 +6,7 @@ const NotValidCard = require('../errors/NotValidCard');
 
 exports.getCards = (req, res, next) => {
   Cards.find({})
-    .then((card) => res.status(200).send({ data: card }))
+    .then((card) => res.status(200).send(card))
     .catch(next);
 };
 
@@ -30,7 +30,7 @@ exports.deleteCard = (req, res, next) => {
   Cards.findById(req.params.cardId)
     .orFail(() => new NotFoundError('Некорректный id карточки'))
     .then((card) => {
-      if (req.user._id === card.owner.toString()) {
+      if (req.user._id === card.owner._id.toString()) {
         return card.remove()
           .then(() => res.send('Карточка удалена'));
       }
@@ -53,7 +53,7 @@ exports.likeCard = (req, res, next) => {
   )
     .orFail(new Error('NotCardId'))
     .then((card) => {
-      res.status(200).send({ data: card, message: 'Лайк добавлен' });
+      res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -71,7 +71,7 @@ exports.dislikeCard = (req, res, next) => {
     { new: true },
   )
     .orFail(new Error('NotCardId'))
-    .then((card) => res.status(200).send({ card, message: 'Лайк удален' }))
+    .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new NotValidData('Переданы неккоректные данные'));

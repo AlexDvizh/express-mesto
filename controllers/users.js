@@ -11,14 +11,14 @@ const { NODE_ENV, JWT_SECRET } = process.env;
 
 exports.getUsers = (req, res, next) => {
   Users.find({})
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send(user))
     .catch(() => {
       next(new NotFoundError('Запрашиваемый пользователь не найден'));
     });
 };
 
 exports.getUserById = (req, res, next) => {
-  Users.findById(req.params.userId)
+  Users.findById(req.user._id)
     .orFail(() => next(new NotFoundError('Пользователь по указанному _id не найден')))
     .then((user) => {
       res.send(user);
@@ -57,7 +57,7 @@ exports.updateProfile = (req, res, next) => {
 
   Users.findByIdAndUpdate(owner, { name, about }, { new: true, runValidators: true })
     .orFail(() => new Error('NotValidId'))
-    .then((user) => res.status(200).send({ data: user }))
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.message === 'NotValidId') {
         next(new NotFoundError('Пользователь по указанному _id не найден'));
@@ -73,7 +73,7 @@ exports.updateAvatar = (req, res, next) => {
 
   Users.findByIdAndUpdate(owner, { avatar }, { new: true, runValidators: true })
     .orFail(() => new Error('NotValidId'))
-    .then((user) => res.status(200).send({ data: user }))
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.message === 'NotValidId') {
         next(new NotFoundError('Пользователь по указанному _id не найден'));
@@ -98,7 +98,6 @@ exports.login = (req, res, next) => {
 };
 
 exports.userInfo = (req, res, next) => {
-  //const owner = req.user._id;
   const {
     name,
     about,
